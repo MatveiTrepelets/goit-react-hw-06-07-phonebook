@@ -1,35 +1,48 @@
 import s from './ContactList.module.css';
-import PropTypes from 'prop-types';
+import ContactItem from '../ContactItem/ContactItem';
+import { useSelector } from 'react-redux';
+import { useGetContactsApiQuery } from 'redux/contactsApi';
 
-const ContactList = ({ contacts, onDeleteContact }) => (
-  <ul className={s.list}>
-    {contacts.map(({ id, name, number }) => (
-      <li key={id} className={s.item}>
-        <p className={s.contact}>
-          {name}............
-          {number}
-        </p>
-        <button
-          className={s.btn}
-          type="submit"
-          onClick={() => onDeleteContact(id)}
-        >
-          Delete
-        </button>
-      </li>
-    ))}
-  </ul>
-);
+const ContactList = () => {
+  const { data, isLoading } = useGetContactsApiQuery();
+  const filter = useSelector(state => state.filter.value);
 
-ContactList.propTypes = {
-  contacts: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      number: PropTypes.string.isRequired,
-    })
-  ),
-  onDeleteContact: PropTypes.func.isRequired,
+  console.log(data);
+
+  const filteredContacts = () => {
+    const normalizeFilter = filter.toLowerCase();
+    return (
+      data &&
+      data.filter(contact =>
+        contact.name.toLowerCase().includes(normalizeFilter)
+      )
+    );
+  };
+
+  const filterEl = filteredContacts();
+
+  return (
+    <>
+      {isLoading && <p>Loading...</p>}
+      {
+        <ul className={s.list}>
+          {!isLoading && data && filterEl.length > 0 ? (
+            filterEl.map(({ id, name, phone }) => (
+              <ContactItem
+                key={id}
+                data={filterEl}
+                id={id}
+                name={name}
+                phone={phone}
+              />
+            ))
+          ) : (
+            <p className={s.text}>No contacts</p>
+          )}
+        </ul>
+      }
+    </>
+  );
 };
 
 export default ContactList;
